@@ -185,48 +185,60 @@ def solve_part1(grid, start_pos, end_pos):
     cur_dir = Direction.E
     visited = dict()
     score = 0
+    path = set(start_pos)
+    optimal_path = set()
 
     state = (start_pos, cur_dir)
     visited[state] = score
-    q.append((start_pos, cur_dir, score))
+    q.append((start_pos, cur_dir, score, path))
 
     min_score = float('inf')
 
     while q:
-        cur_pos, cur_dir, score = q.popleft()
+        cur_pos, cur_dir, score, path = q.popleft()
         # print(f"cur_pos: {cur_pos}, cur_dir: {cur_dir}, score: {score}")
         if cur_pos == end_pos:
-            min_score = min(min_score, score)
+            if score == min_score:
+                optimal_path = optimal_path.union(path)
+            elif score < min_score:
+                min_score = score
+                optimal_path = path
             continue
         
         ##  Gather moves
         # Forward
         forward = (cur_pos[0] + cur_dir.get_move()[0], cur_pos[1] + cur_dir.get_move()[1])
         if grid[forward[0]][forward[1]] != '#' and (forward, cur_dir) not in visited:
-            q.append((forward, cur_dir, score + 1))
+            q.append((forward, cur_dir, score + 1, path.union({forward})))
             visited[(forward, cur_dir)] = score + 1
         elif (forward, cur_dir) in visited and score + 1 < visited[(forward, cur_dir)]:
             visited[(forward, cur_dir)] = score + 1
-            q.append((forward, cur_dir, score + 1))
+            q.append((forward, cur_dir, score + 1, path.union({forward})))
+        elif (forward, cur_dir) in visited and score + 1 == visited[(forward, cur_dir)]:
+            q.append((forward, cur_dir, score + 1, path.union({forward})))
         
         # Rotate left
         left_dir = Direction.rotate_left(cur_dir)
         if (cur_pos, left_dir) not in visited:
-            q.append((cur_pos, left_dir, score + 1000))
+            q.append((cur_pos, left_dir, score + 1000, path))
             visited[(cur_pos, left_dir)] = score + 1000
         elif (cur_pos, left_dir) in visited and score + 1000 < visited[(cur_pos, left_dir)]:
             visited[(cur_pos, left_dir)] = score + 1000
-            q.append((cur_pos, left_dir, score + 1000))
+            q.append((cur_pos, left_dir, score + 1000, path))
+        elif (cur_pos, left_dir) in visited and score + 1000 == visited[(cur_pos, left_dir)]:
+            q.append((cur_pos, left_dir, score + 1000, path))
         
         # Rotate right
         right_dir = Direction.rotate_right(cur_dir)
         if (cur_pos, right_dir) not in visited:
-            q.append((cur_pos, right_dir, score + 1000))
+            q.append((cur_pos, right_dir, score + 1000, path))
             visited[(cur_pos, right_dir)] = score + 1000
         elif (cur_pos, right_dir) in visited and score + 1000 < visited[(cur_pos, right_dir)]:
             visited[(cur_pos, right_dir)] = score + 1000
-            q.append((cur_pos, right_dir, score + 1000))
-    return min_score
+            q.append((cur_pos, right_dir, score + 1000, path))
+        elif (cur_pos, right_dir) in visited and score + 1000 == visited[(cur_pos, right_dir)]:
+            q.append((cur_pos, right_dir, score + 1000, path))
+    return min_score, optimal_path
 
 
 if __name__ == "__main__":
@@ -240,4 +252,13 @@ if __name__ == "__main__":
         if 'E' in row:
             end_pos = (i, row.index('E'))
 
-    print(f"Part 1: {solve_part1(grid, start_pos, end_pos)}")
+    score, optimal_path = solve_part1(grid, start_pos, end_pos)
+    count = 0
+    for path in optimal_path:
+        print(path)
+        # if path != start_pos and path != end_pos:
+        count += 1
+    
+
+    print(f"Part 1: {score}")
+    print(f"Part 2: {count}")
